@@ -6,16 +6,16 @@ from Utils.TimeLogger import log
 from Params import args
 
 if args.data == 'yelp':
-	predir = 'D:/Datasets/yelp/%s/' % args.target
+	predir = 'Datasets/yelp/%s/' % args.target
 	behs = ['tip', 'neg', 'neutral', 'pos']
 elif args.data == 'ml10m':
-	predir = 'D:/Datasets/MultiInt-ML10M/%s/' % args.target
+	predir = 'Datasets/MultiInt-ML10M/%s/' % args.target
 	behs = ['neg', 'neutral', 'pos']
 elif args.data == 'ECommerce':
 	if args.target == 'click':
-		predir = 'D:/Datasets/Tmall/backup/hr_ndcg_click/'
+		predir = 'Datasets/Tmall/backup/hr_ndcg_click/'
 	elif args.target == 'buy':
-		predir = 'D:/Datasets/Tmall/backup/hr_ndcg_buy/'
+		predir = 'Datasets/Tmall/backup/hr_ndcg_buy/'
 	behs = ['pv', 'fav', 'cart', 'buy']
 trnfile = predir + 'trn_'
 tstfile = predir + 'tst_'
@@ -112,63 +112,7 @@ def transToLsts(mat, mask=False):
 		data = np.array([0.0], np.float32)
 	return indices, data, shape
 
-def sampleLargeGraph_forJD(pckUsrs, sampDepth=2, sampNum=25000):
-	global adjs
-	global adj
-	global tpadj
-
-	def makeMask(nodes, size):
-		mask = np.ones(size)
-		if not nodes is None:
-			mask[nodes] = 0.0
-		return mask
-
-	def updateBdgt(adj, nodes):
-		if nodes is None:
-			return 0
-		tembat = 1000
-		ret = 0
-		for i in range(int(np.ceil(len(nodes) / tembat))):
-			st = tembat * i
-			ed = min((i+1) * tembat, len(nodes))
-			temNodes = nodes[st: ed]
-			ret += np.sum(adj[temNodes], axis=0)
-		return ret
-
-	def updateUsrBdgt(adj, ItmBudget):
-		return np.sum(adj.multiply(np.reshape(ItmBudget, [-1, 1])), axis=0)
-
-	def sample(budget, mask, sampNum):
-		score = (mask * np.reshape(np.array(budget), [-1])) ** 2
-		norm = np.sum(score)
-		if norm == 0:
-			return np.random.choice(len(score), 1)
-		score = list(score / norm)
-		pckNodes = np.random.choice(len(score), sampNum, p=score, replace=False)
-		return pckNodes
-
-	usrMask = makeMask(pckUsrs, adj.shape[0])
-	itmBdgt = updateBdgt(adj, pckUsrs)
-	usrBdgt = updateUsrBdgt(tpadj, itmBdgt)
-	for i in range(sampDepth):
-		newUsrs = sample(usrBdgt, usrMask, sampNum)
-		usrMask = usrMask * makeMask(newUsrs, adj.shape[0])
-		if i == sampDepth - 1:
-			break
-		itmBdgt += updateBdgt(adj, newUsrs)
-		usrBdgt += updateUsrBdgt(tpadj, itmBdgt)
-	usrs = np.reshape(np.argwhere(usrMask==0), [-1])
-
-	pckAdjs = []
-	pckTpAdjs = []
-	for i in range(len(adjs)):
-		pckU = adjs[i][usrs]
-		tpPckI = transpose(pckU)
-		pckTpAdjs.append(tpPckI)
-		pckAdjs.append(pckU)
-	return pckAdjs, pckTpAdjs, usrs
-
-def sampleLargeGraph(pckUsrs, pckItms=None, sampDepth=2, sampNum=62500):
+def sampleLargeGraph(pckUsrs, pckItms=None, sampDepth=2, sampNum=args.graphSampleN):
 	global adjs
 	global adj
 	global tpadj
@@ -212,69 +156,6 @@ def sampleLargeGraph(pckUsrs, pckItms=None, sampDepth=2, sampNum=62500):
 		usrMask = usrMask * makeMask(newUsrs, adj.shape[0])
 		newItms = sample(itmBdgt, itmMask, sampNum)
 		itmMask = itmMask * makeMask(newItms, adj.shape[1])
-		if i == sampDepth - 1:
-			break
-		usrBdgt += updateBdgt(tpadj, newItms)
-		itmBdgt += updateBdgt(adj, newUsrs)
-	usrs = np.reshape(np.argwhere(usrMask==0), [-1])
-	itms = np.reshape(np.argwhere(itmMask==0), [-1])
-	pckAdjs = []
-	pckTpAdjs = []
-	for i in range(len(adjs)):
-		pckU = adjs[i][usrs]
-		tpPckI = transpose(pckU)[itms]
-		pckTpAdjs.append(tpPckI)
-		pckAdjs.append(transpose(tpPckI))
-	return pckAdjs, pckTpAdjs, usrs, itms
-
-def sampleNodes(pckUsrs, pckItms=None, sampDepth=3, sampNum=10):
-	global adjs
-	global adj
-	global tpadj
-
-	def makeMask(nodes, size):
-		mask = np.ones(size)
-		if not nodes is None:
-			mask[nodes] = 0.0
-		return mask
-
-	def updateBdgt(adj, nodes):
-		if nodes is None:
-			return 0
-		tembat = 1000
-		ret = 0
-		for i in range(int(np.ceil(len(nodes) / tembat))):
-			st = tembat * i
-			ed = min((i+1) * tembat, len(nodes))
-			temNodes = nodes[st: ed]
-			ret += np.sum(adj[temNodes], axis=0)
-		return ret
-
-	def sample(budget, mask, sampNum):
-		score = (mask * np.reshape(np.array(budget), [-1])) ** 2
-		norm = np.sum(score)
-		if norm == 0:
-			return np.random.choice(len(score), 1)
-		score = list(score / norm)
-		pckNodes = np.random.choice(len(score), sampNum, p=score, replace=False)
-		return pckNodes
-
-	usrMask = makeMask(pckUsrs, adj.shape[0])
-	itmMask = makeMask(pckItms, adj.shape[1])
-	itmBdgt = updateBdgt(adj, pckUsrs)
-	if pckItms is None:
-		pckItms = sample(itmBdgt, itmMask, len(pckUsrs))
-		itmMask = itmMask * makeMask(pckItms, adj.shape[1])
-	usrBdgt = updateBdgt(tpadj, pckItms)
-	uNum = len(pckUsrs)
-	iNum = len(pckItms)
-	for i in range(sampDepth):
-		newUsrs = sample(usrBdgt, usrMask, min(sampNum * iNum, 100))
-		usrMask = usrMask * makeMask(newUsrs, adj.shape[0])
-		newItms = sample(itmBdgt, itmMask, min(sampNum * uNum, 100))
-		itmMask = itmMask * makeMask(newItms, adj.shape[1])
-		uNum = len(newUsrs)
-		iNum = len(newItms)
 		if i == sampDepth - 1:
 			break
 		usrBdgt += updateBdgt(tpadj, newItms)
