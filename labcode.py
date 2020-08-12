@@ -118,11 +118,12 @@ class Recommender:
 		pckILats = tf.reshape(tf.nn.embedding_lookup(ilats, self.iids), [-1, args.latdim])
 		ukeys = tf.reshape(FC(pckULats, args.latdim, reg=True, name='key', reuse=True), [-1, latnum, 1, args.attHead, args.latdim//args.attHead])
 		ikeys = tf.reshape(FC(pckILats, args.latdim, reg=True, name='key', reuse=True), [-1, 1, latnum, args.attHead, args.latdim//args.attHead])
-		uvals = tf.reshape(FC(pckULats, args.latdim, reg=True, name='val', reuse=True), [-1, latnum, 1, args.attHead, args.latdim//args.attHead])
-		ivals = tf.reshape(FC(pckILats, args.latdim, reg=True, name='val', reuse=True), [-1, 1, latnum, args.attHead, args.latdim//args.attHead])
 		if args.data == 'ml10m' and args.target == 'buy' or args.data == 'ECommerce' and args.target == 'buy':
 			uvals = tf.reshape(pckULats, [-1, latnum, 1, args.attHead, args.latdim//args.attHead])
 			ivals = tf.reshape(pckILats, [-1, 1, latnum, args.attHead, args.latdim//args.attHead])
+		else:
+			uvals = tf.reshape(FC(pckULats, args.latdim, reg=True, name='val', reuse=True), [-1, latnum, 1, args.attHead, args.latdim//args.attHead])
+			ivals = tf.reshape(FC(pckILats, args.latdim, reg=True, name='val', reuse=True), [-1, 1, latnum, args.attHead, args.latdim//args.attHead])
 
 		att = Activate(tf.reduce_sum(ukeys * ikeys, axis=-1, keepdims=True), 'relu')
 		# att = tf.reshape(tf.nn.softmax(tf.reshape(tf.reduce_sum(ukeys * ikeys, axis=-1), [-1, (latnum)**2, args.attHead]), axis=1), [-1, latnum, latnum, args.attHead, 1])
