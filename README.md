@@ -1,5 +1,5 @@
-# GMTN
-Anonymous code for GMTN
+# GNMR
+Anonymous code for GNMR
 
 Please unzip data files in Datasets/MultiInt-ML10M first.
 
