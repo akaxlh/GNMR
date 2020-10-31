@@ -12,10 +12,7 @@ elif args.data == 'ml10m':
 	predir = 'Datasets/MultiInt-ML10M/%s/' % args.target
 	behs = ['neg', 'neutral', 'pos']
 elif args.data == 'ECommerce':
-	if args.target == 'click':
-		predir = 'Datasets/Tmall/backup/hr_ndcg_click/'
-	elif args.target == 'buy':
-		predir = 'Datasets/Tmall/backup/hr_ndcg_buy/'
+	predir = 'Datasets/Tmall/%s/' % args.target
 	behs = ['pv', 'fav', 'cart', 'buy']
 trnfile = predir + 'trn_'
 tstfile = predir + 'tst_'
