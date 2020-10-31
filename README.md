@@ -1,5 +1,5 @@
 # GNMR
-Anonymous code for GNMR
+Code for GNMR in ICDE 2021
 
 Please unzip data files in Datasets/MultiInt-ML10M first.
 
