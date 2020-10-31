@@ -106,35 +106,11 @@ class Recommender:
 			ulats[i] = ulats[i] / (1e-6+tf.sqrt(1e-6+tf.reduce_sum(tf.square(ulats[i]), axis=-1, keepdims=True)))
 			ilats[i] = ilats[i] / (1e-6+tf.sqrt(1e-6+tf.reduce_sum(tf.square(ilats[i]), axis=-1, keepdims=True)))
 
-		# # ablation on attentive multi-order pred
-		# ulat = FC(tf.concat(ulats, axis=1), args.latdim, reg=True, useBias=True, name='ablation_trans', activation='relu')
-		# ilat = FC(tf.concat(ilats, axis=1), args.latdim, reg=True, useBias=True, name='ablation_trans', reuse=True, activation='relu')
-		# pckUlat = tf.nn.embedding_lookup(ulat, self.uids)
-		# pckIlat = tf.nn.embedding_lookup(ilat, self.iids)
-		# predLat = pckUlat * pckIlat
-		# # another mult-order ablation
-		# ulat = ulats[-1]
-		# ilat = ilats[-1]
-		# pckUlat = tf.nn.embedding_lookup(ulat, self.uids)
-		# pckIlat = tf.nn.embedding_lookup(ilat, self.iids)
-		# predLat = pckUlat * pckIlat
-
-		latnum = len(ulats)
-		ulats = tf.stack(ulats, axis=1)
-		ilats = tf.stack(ilats, axis=1)
-
-		pckULats = tf.reshape(tf.nn.embedding_lookup(ulats, self.uids), [-1, args.latdim])
-		pckILats = tf.reshape(tf.nn.embedding_lookup(ilats, self.iids), [-1, args.latdim])
-		ukeys = tf.reshape(FC(pckULats, args.latdim, reg=True, name='key', reuse=True), [-1, latnum, 1, args.attHead, args.latdim//args.attHead])
-		ikeys = tf.reshape(FC(pckILats, args.latdim, reg=True, name='key', reuse=True), [-1, 1, latnum, args.attHead, args.latdim//args.attHead])
-		uvals = tf.reshape(FC(pckULats, args.latdim, reg=True, name='val', reuse=True), [-1, latnum, 1, args.attHead, args.latdim//args.attHead])
-		ivals = tf.reshape(FC(pckILats, args.latdim, reg=True, name='val', reuse=True), [-1, 1, latnum, args.attHead, args.latdim//args.attHead])
-
-		att = Activate(tf.reduce_sum(ukeys * ikeys, axis=-1, keepdims=True), 'relu')
-		self.att = tf.squeeze(att)
-
-		lat = uvals * ivals
-		predLat = tf.reshape(tf.reduce_sum(att * lat, axis=[1, 2]), [-1, args.latdim]) * args.mult
+		ulat = FC(tf.concat(ulats, axis=1), args.latdim, reg=True, useBias=True, name='ablation_trans', activation='relu')
+		ilat = FC(tf.concat(ilats, axis=1), args.latdim, reg=True, useBias=True, name='ablation_trans', reuse=True, activation='relu')
+		pckUlat = tf.nn.embedding_lookup(ulat, self.uids)
+		pckIlat = tf.nn.embedding_lookup(ilat, self.iids)
+		predLat = pckUlat * pckIlat
 
 		for i in range(1):
 			predLat = FC(predLat, args.latdim, reg=True, useBias=True, activation='relu') + predLat
