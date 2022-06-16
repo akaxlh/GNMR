@@ -35,7 +35,7 @@ The codes of GNMR are implemented and tested under the following development env
 We utilized three datasets to evaluate GNMR: <i>Yelp, MovieLens, </i>and <i>Taobao</i>. The <i>like</i> behavior is taken as the target behavior for Yelp and MovieLens data. The <i>purchase</i> behavior is taken as the target behavior for Taobao data. The last target behavior for the test users are left out to compose the testing set. We filtered out users and items with too few interactions. Except from predicting the target behavior, this repository also includes datasets for prediction overall user-item interactions. In specific, the testing datasets in `Datasets/dataset_name/click` directory were composed by selecting users' last interaction, without consideration of interaction types.
 
 ## How to Run the Codes
-Please unzip the datasets in `Datasets/` first. Also you need to create the `History/` and the `Models/` directories. The command to train GNMR on the Yelp/MovieLens/Taobao dataset is as follows. The commands specify the hyperparameter settings that generate the reported results in the paper. For Taobao data, we conducted sub-graph sampling to efficiently handle the large-scale multi-behavior user-item graphs.
+Please unzip the datasets in `Datasets/` first. Also you need to create the `History/` and the `Models/` directories. The command to train GNMR on the Yelp/MovieLens/Taobao dataset is as follows. The commands specify the hyperparameter settings that generate the reported results in the paper. For overall prediction on Taobao data, we conducted sub-graph sampling to efficiently handle the large-scale multi-behavior user-item graphs.
 
 * Yelp-Target
 ```
